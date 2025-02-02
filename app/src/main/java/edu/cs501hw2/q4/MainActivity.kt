@@ -1,5 +1,6 @@
 package edu.cs501hw2.q4
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -7,13 +8,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Snackbar
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -25,7 +20,10 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import edu.cs501hw2.q4.ui.theme.Q4Theme
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+
+val bio = "Born on 17 July 1983 in Shanghai, China, he is a pop male singer, music producer, film and television actor in Mainland China, graduated from Glion Hotel Management School. In 2005, he made his official debut by participating in the talent show \"My Style\"."
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -35,19 +33,8 @@ class MainActivity : ComponentActivity() {
             Q4Theme {
                 val snackbarHostState = remember { SnackbarHostState() }
                 val scope = rememberCoroutineScope()
-
-                Scaffold(
-                    modifier = Modifier.fillMaxSize(),
-                    snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
-                ) { innerPadding ->
-                    ProfileScreen(
-                        modifier = Modifier.padding(innerPadding),
-                        onFollowClick = {
-                            scope.launch {
-                                snackbarHostState.showSnackbar("Following")
-                            }
-                        }
-                    )
+                Scaffold(modifier = Modifier.fillMaxSize(), snackbarHost = { SnackbarHost(hostState = snackbarHostState) }) { innerPadding ->
+                    ProfileScreen(Modifier.padding(innerPadding), snackbarHostState, scope)
                 }
             }
         }
@@ -55,75 +42,54 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun ProfileScreen(
-    modifier: Modifier = Modifier,
-    onFollowClick: () -> Unit
-) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        // 上部区域：头像和基本信息
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // 左侧头像
-            Image(
-                painter = painterResource(id = R.drawable.joker_xue), // 需要添加图片资源
-                contentDescription = "Profile Picture",
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .size(80.dp)
-                    .clip(CircleShape)
-            )
+fun ImageDisplay() {
+    Image(
+        painter = painterResource(id = R.drawable.joker_xue),
+        contentDescription = "Profile Picture",
+        contentScale = ContentScale.Crop,
+        modifier = Modifier.size(150.dp).clip(CircleShape)
+    )
+}
 
-            Spacer(modifier = Modifier.width(16.dp))
-
-            // 右侧基本信息
-            Column(
-                modifier = Modifier.weight(1f)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "John Doe",
-                        style = MaterialTheme.typography.headlineMedium
-                    )
-
-                    Button(onClick = onFollowClick) {
-                        Text(text = "Follow")
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    ProfileStatItem("Posts", "256")
-                    ProfileStatItem("Followers", "12.5K")
-                    ProfileStatItem("Following", "893")
-                }
-            }
+@Composable
+fun UserInfo(modifier: Modifier, snackbarHostState: SnackbarHostState, coroutineScope: CoroutineScope){
+    Column(modifier, horizontalAlignment = Alignment.CenterHorizontally) {
+        Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, Alignment.CenterVertically) {
+            Text(text = "Joker Xue", style = MaterialTheme.typography.headlineMedium)
         }
+
+        Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween) {
+            ProfileStatItem("Songs", "491")
+            ProfileStatItem("Videos", "4642")
+            ProfileStatItem("Followers", "24.14M")
+        }
+
+        Row(){
+            Button(onClick = { coroutineScope.launch { snackbarHostState.showSnackbar("Following!") } }) { Text(text = "Follow") }
+        }
+
+    }
+}
+
+@Composable
+fun TopHalf(modifier: Modifier, snackbarHostState: SnackbarHostState, coroutineScope: CoroutineScope) {
+    Row(modifier = modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        ImageDisplay()
+
+        Spacer(Modifier.width(16.dp))
+
+        UserInfo(Modifier.weight(1f), snackbarHostState, coroutineScope)
+    }
+}
+
+@Composable
+fun ProfileScreen(modifier: Modifier = Modifier, snackbarHostState: SnackbarHostState, coroutineScope: CoroutineScope) {
+    Column(modifier.fillMaxSize().padding(16.dp)) {
+        TopHalf(Modifier.fillMaxWidth(), snackbarHostState, coroutineScope)
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // 下部区域：个人简介
-        Text(
-            text = "Android Developer | Compose enthusiast\n" +
-                    "Building awesome mobile experiences\n" +
-                    "Open source contributor",
-            style = MaterialTheme.typography.bodyLarge,
-            textAlign = TextAlign.Start,
-            modifier = Modifier.fillMaxWidth()
-        )
+        Text(text = bio, style = MaterialTheme.typography.bodyLarge, textAlign = TextAlign.Start)
     }
 }
 
